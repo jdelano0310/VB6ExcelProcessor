@@ -69,14 +69,14 @@ Dim EmpED() As Date
 
 Private Sub ReadOverview(ws As Excel.Worksheet)
 
-    ' traverse the table area for data
-    Dim Col As Integer  ' the columber to read from
+    ' read the data from the worksheet passed in
+    Dim Col As Integer  ' the column to read from
     Dim Row As Integer  ' the row to read from
 
     Dim recCount As Integer   ' track how many items that have been read
     
-    Col = 1
-    Row = 4
+    Col = 1  ' starting with this column
+    Row = 4  ' starting with this row
     recCount = 1
     
     ' fill the simple arrays with the data from the first sheet
@@ -107,17 +107,20 @@ End Sub
 
 Private Sub btnProcess_Click()
 
-    Set objExcel = New Excel.Application
-    Set objWorkbook = objExcel.Workbooks.Open(ExcelFileName)
+    Set objExcel = New Excel.Application    ' how VB starts Excel in the background
+    Set objWorkbook = objExcel.Workbooks.Open(ExcelFileName)   '
     WriteToListboxLog ("Opened " & ExcelFileName)
         
-    ' check to make sure the 2 sheets required are present
+    ' given our format we know we need an Overview and a Detail sheet to wook with
     Dim OverviewWS As Excel.Worksheet
     Dim DetailWS As Excel.Worksheet
     Dim WSheet As Excel.Worksheet
+    
     Dim SaveTheWorkbook As Boolean   ' this indicates whether or not to save the file when closing
     SaveTheWorkbook = False
     
+    ' check to make sure the 2 sheets required are present, loop through all the Sheet names in
+    ' the workbook to check for what this needs
     For i = 1 To objExcel.Sheets.Count
         Set WSheet = objExcel.Sheets(i)
         Select Case WSheet.Name
@@ -127,6 +130,7 @@ Private Sub btnProcess_Click()
                 Set DetailWS = WSheet
         End Select
     Next
+    Set WSheet = Nothing
     
     If OverviewWS Is Nothing Or DetailWS Is Nothing Then
         ' a required worksheet is missing from the selected file
@@ -165,26 +169,26 @@ Private Sub AllDone(SaveTheWorkbook As Boolean)
         WriteToListboxLog ("Saved " & ExcelFileName)
     End If
     
-    objExcel.ActiveWorkbook.Close False, ExcelFileName
-    objExcel.Quit
+    objExcel.ActiveWorkbook.Close False, ExcelFileName   ' close the workbook don't save, this is the file name
+    objExcel.Quit    ' quit Excel
     
-    Set ojbWorkbook = Nothing
+    Set ojbWorkbook = Nothing   ' this makes sure the workbook isn't left in memory
     
     btnProcess.Enabled = False  ' the user can't process anything until there is a file selected again
 End Sub
 
 Private Sub WriteToDetail(ws As Excel.Worksheet)
 
+    ' using the data read into the arrays, find the employee the data matches with and create a detail record
+    ' for each date between the start and end date (including both the start and end date)
+
     Dim Col As Integer
     Dim Row As Integer
-    Dim EName As String
+
     Dim DateBetween As Date
     
-    Dim EmployeeNameHeaderRow As Integer
-    EmployeeNameHeaderRow = 2  ' the row containing the employee name
-    
-    Col = 1
-    Dim CurrentEmpName As String
+    Col = 1   ' start at column
+    Dim CurrentEmpName As String   ' this holds which employee is being processed and if/when it changes
     CurrentEmpName = ""
     
     For i = 1 To UBound(EmpName)
@@ -201,8 +205,8 @@ Private Sub WriteToDetail(ws As Excel.Worksheet)
                 WriteToListboxLog ("Writing data for " & EmpName(i) & " doing " & EmpWorkType(i) & " for " & EmpSD(i) & " thru " & EmpED(i))
             End If
         Else
-            'was was left off at the last place that data was written to the sheet, as the name hasn't changed increment
-            ' the row to the next line
+            ' row was left off at the last place that data was written to the sheet, as the name hasn't changed increment
+            ' the row to the next line to start writting more records for the employee
             Row = Row + 1
         End If
         
@@ -215,7 +219,7 @@ Private Sub WriteToDetail(ws As Excel.Worksheet)
             If EmpSD(i) <> EmpED(i) Then
                 ' the employee is performing this role for more than 1 day
                 If CDate(EmpED(i)) > CDate(EmpSD(i)) Then
-                    'as long as the dates are in the correct order create a row for each date between them
+                    'as long as the dates are in the correct order create a row for each date between the start and end dates
                     DateBetween = EmpSD(i)
                     Do Until DateBetween = EmpED(i)
                         DateBetween = DateBetween + 1
@@ -241,7 +245,7 @@ Private Sub FindEmployeeSection(ws As Excel.Worksheet, EmployeeName As String, _
     ' this sub procedure finds the emplyee name in the detail sheet
     
     Dim EmployeeNameHeaderRow As Integer
-    EmployeeNameHeaderRow = 2  ' the row containing the employee names
+    EmployeeNameHeaderRow = 2  ' the row containing the employee name, this is due to my formatting of the excel file
     
     ' with the format of the sheet I have if there are 3 blank spaces on row 2 then there are no more
     ' employees to match to
@@ -251,34 +255,37 @@ Private Sub FindEmployeeSection(ws As Excel.Worksheet, EmployeeName As String, _
     Col = 1 ' reset the column when searching in case emplyee names are not in order
     Row = 4 ' in my format this is the row number the data should start writting on
 
-    With ws
-    
-        ' find the employee header on the employee name header row
-        Do While True
-            If .Cells(EmployeeNameHeaderRow, Col) = "" Then
-                EmptyCellCount = EmptyCellCount + 1
-                
-                If EmptyCellCount = 3 Then
-                    Col = -1
-                    Exit Do
-                End If
-                
-                Col = Col + 1
-            Else
-                EmptyCellCount = 0
-                If EmployeeName = .Cells(EmployeeNameHeaderRow, Col) Then
-                    ' found the correct employee, now scroll down to find the next empty row
-                    Do While .Cells(Row, Col) <> ""
-                        Row = Row + 1
-                    Loop
-                    Exit Do
-                Else
-                    ' move to the next column to continue to check for the employee name
-                    Col = Col + 1
-                End If
+    ' find the employee header on the employee name header row. checking one cell at a time
+    ' on the row setup for employee name in the detail sheet in the excel file
+    Do While True
+        ' check for blank cells
+        If ws.Cells(EmployeeNameHeaderRow, Col) = "" Then
+            ' increment the counter for the number of blank cells in a row
+            EmptyCellCount = EmptyCellCount + 1
+            
+            ' if we encounter 3 then (given the known format of the excel file) there are no more
+            ' employees listed
+            If EmptyCellCount = 3 Then
+                Col = -1
+                Exit Do ' leave the loop
             End If
-        Loop
-    End With
+            
+            ' change which column that is check next
+            Col = Col + 1
+        Else
+            EmptyCellCount = 0 ' reset the number of blank cells in a row
+            If EmployeeName = ws.Cells(EmployeeNameHeaderRow, Col) Then
+                ' the employee name was found, now find the next empty row below the employee name to write data to
+                Do While ws.Cells(Row, Col) <> ""
+                    Row = Row + 1
+                Loop
+                Exit Do
+            Else
+                ' move to the next column to continue to check for the employee name
+                Col = Col + 1
+            End If
+        End If
+    Loop
     
 End Sub
 
@@ -286,16 +293,16 @@ Private Sub WriteToListboxLog(LogLine As String)
 
     ' take the passed text and add it to the listbox to show the user what is going on
     lbLog.AddItem (LogLine)
-    DoEvents
+    DoEvents   ' allows VB to catch up on processing the add and showing it in the form
     
 End Sub
 
 Private Sub ResetForm()
 
     ' reset the controls on the form
-    lblFileName.Caption = ""
-    btnProcess.Enabled = False
-    lbLog.Clear
+    lblFileName.Caption = ""   'removes the file name displayed on the form
+    btnProcess.Enabled = False  ' the stops the process button from being clicked
+    lbLog.Clear     ' clear all the data added to the listbox used as a log
     
 End Sub
 
@@ -311,7 +318,7 @@ Private Sub btnSelectFile_Click()
         ' The user canceled the dialog
         Exit Sub
     ElseIf Err.Number <> 0 Then
-        ' Unknown error
+        ' some error happened selecting the file
         MsgBox "Error " & Format$(Err.Number) & _
             " selecting file." & vbCrLf & _
             Err.Description
@@ -338,11 +345,12 @@ Private Sub Form_Load()
         .Flags = cdlOFNFileMustExist + cdlOFNHideReadOnly + cdlOFNLongNames + cdlOFNExplorer
         .CancelError = True
     End With
-    
-    ' was used for testing ExcelFileName = "C:\Documents and Settings\Administrator\My Documents\employee scheduling.xlsx"
+   
+    ' was used for testing so I didn't have to keep selecting the file over and over via the dialog box
+    ' ExcelFileName = "C:\Documents and Settings\Administrator\My Documents\employee scheduling.xlsx"
 End Sub
 
 Private Sub Form_Unload(Cancel As Integer)
-    Set objExcel = Nothing
+    Set objExcel = Nothing ' this removes Excel from the VB form's control
 
 End Sub
