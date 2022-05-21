@@ -11,12 +11,15 @@ My dev environment is XP SP3 Pro - 32bit in a VirtualBox (6.1.34), MS Office 200
 
 Screenshots 
 When you start the app
+
 ![just started - before selecting a file](https://user-images.githubusercontent.com/8117229/169661296-78a0324b-db6a-409a-8645-cc88cbc4a418.png)
 
 Selecting an Excel file using the common dialog box
+
 ![dialog box to select file](https://user-images.githubusercontent.com/8117229/169661299-cc8bb4b1-794c-46f8-8799-e70b636f5ee6.png)
 
 After the file has been selected 
+
 ![after selecting a file](https://user-images.githubusercontent.com/8117229/169661304-9e652ec2-6ca2-4922-82ef-fb21878936eb.png)
 
 After clicking the Process button the log is filled 
