@@ -1,5 +1,5 @@
 # VB6ExcelProcessor
-Uses VB6 to open - read one sheet to an array - switch to another sheet and write that data - save and close
+Uses VB6 to open - read one sheet to an array - switch to another sheet and write that data with some processing - save and close
 
 You need MS Excel installed and referenced in your project. In VB6 with you project open, click Project in the menu then References (it is near the bottom) scroll until you find Microsoft Excel (your version) Object Libray and check the box to the left. Click OK.
 
