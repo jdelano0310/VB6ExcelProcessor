@@ -10,6 +10,14 @@ Begin VB.Form Form1
    ScaleHeight     =   4020
    ScaleWidth      =   10380
    StartUpPosition =   3  'Windows Default
+   Begin VB.CommandButton btnExecuteExcelMacro 
+      Caption         =   "Run Excel Macro"
+      Height          =   615
+      Left            =   240
+      TabIndex        =   4
+      Top             =   2640
+      Width           =   975
+   End
    Begin VB.ListBox lbLog 
       Height          =   3180
       Left            =   1440
@@ -104,6 +112,24 @@ Private Sub ReadOverview(ws As Excel.Worksheet)
     
 End Sub
 
+
+Private Sub btnExecuteExcelMacro_Click()
+
+    ExcelFileName = "C:\Documents and Settings\Administrator\My Documents\employee scheduling.xlsm"
+    Set objExcel = New Excel.Application    ' how VB starts Excel in the background
+    Set objWorkbook = objExcel.Workbooks.Open(ExcelFileName)
+        
+    ' tell Excel to process the numbers
+    objExcel.Run "'employee scheduling.xlsm'!Module1.ProcessNumbers"
+    
+    Dim objWorksheet As Excel.Worksheet
+    Set objWorksheet = objWorkbook.Worksheets("Sheet3")
+    
+    MsgBox "The process result is: " & objWorksheet.Cells(16, 2).Value
+    
+    AllDone True
+    
+End Sub
 
 Private Sub btnProcess_Click()
 
